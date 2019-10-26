@@ -1,66 +1,36 @@
-use plotlib::page::Page;
-use plotlib::line::{Line, Style};
-use plotlib::style::Line as LineStyle;
-use plotlib::view::ContinuousView;
+extern crate ndarray;
 
-pub fn sigmoid(x: Vec<f64>) -> Vec<f64> {
-    x.into_iter().map(|el| 1. / (1. + (-el).exp())).collect()
+use ndarray::{array, Array1};
+
+pub fn sigmoid(x: Array1<f64>) -> Array1<f64> {
+    x.map(|&el| 1. / (1. + (-el).exp()))
 }
 
-pub fn step_function(x: Vec<f64>) -> Vec<f64> {
-    x.into_iter().map(|el| if el > 0. { 1. } else { 0. }).collect()
+pub fn step_function(x: Array1<f64>) -> Array1<f64> {
+    x.map(|&el| if el > 0. { 1. } else { 0. })
 }
 
-pub fn relu(x: Vec<f64>) -> Vec<f64> {
-    x.into_iter().map(|el| if el > 0. { el } else { 0. }).collect()
+pub fn relu(x: Array1<f64>) -> Array1<f64> {
+    x.map(|&el| if el > 0. { el } else { 0. })
+}
+
+pub fn softmax(x: Array1<f64>) -> Array1<f64> {
+    let c = x.fold(0. / 0., |m, v| v.max(m));
+    let sum = x.map(|&el| (el - c).exp()).sum();
+
+    x.map(|&el| (el - c).exp() / sum)
 }
 
 fn main() {
-    let x = (-500..500).map(|n| n as f64 / 100.).collect::<Vec<f64>>();
-    let y = step_function(x.clone());
+    // dim()で要素が分かる
+    let a = array![[1., 2., 3.], [4., 5., 6.]];
+    let b = array![[1., 2.], [3., 4.], [5., 6.]];
 
-    let data = x.into_iter().enumerate().map(|(i, xd)| (xd, y[i])).collect::<Vec<(f64, f64)>>();
+    println!("{:?}", a.dot(&b));
 
-    let l1 = Line::new(&data).style(
-        Style::new().colour("#DD3355"),
-    );
+    let a = array![1., 2., 3.];
+    println!("{:?}", sigmoid(a));
 
-    let v = ContinuousView::new()
-        .add(&l1)
-        .x_range(-5.5, 5.5)
-        .y_range(-0.5, 1.5);
-
-    Page::single(&v).save("step_function.svg").unwrap();
-
-    let x = (-500..500).map(|n| n as f64 / 100.).collect::<Vec<f64>>();
-    let y = sigmoid(x.clone());
-
-    let data = x.into_iter().enumerate().map(|(i, xd)| (xd, y[i])).collect::<Vec<(f64, f64)>>();
-
-    let l1 = Line::new(&data).style(
-        Style::new().colour("#DD3355"),
-    );
-
-    let v = ContinuousView::new()
-        .add(&l1)
-        .x_range(-5.5, 5.5)
-        .y_range(-0.5, 1.5);
-
-    Page::single(&v).save("sigmoid.svg").unwrap();
-
-    let x = (-500..500).map(|n| n as f64 / 100.).collect::<Vec<f64>>();
-    let y = relu(x.clone());
-
-    let data = x.into_iter().enumerate().map(|(i, xd)| (xd, y[i])).collect::<Vec<(f64, f64)>>();
-
-    let l1 = Line::new(&data).style(
-        Style::new().colour("#DD3355"),
-    );
-
-    let v = ContinuousView::new()
-        .add(&l1)
-        .x_range(-5.5, 5.5)
-        .y_range(-0.5, 5.5);
-
-    Page::single(&v).save("relu.svg").unwrap();
+    let a = array![1010., 1000., 990.];
+    println!("{:?}", softmax(a));
 }
